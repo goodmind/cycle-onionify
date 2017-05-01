@@ -2,7 +2,7 @@
   "name": "example",
   "version": "0.0.0",
   "private": true,
-  "author": "Andre Staltz",
+  "author": "Dario Aprea",
   "license": "MIT",
   "dependencies": {
     "@cycle/run": "3.0",

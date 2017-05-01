@@ -1,23 +1,22 @@
 import xs, {Stream} from 'xstream';
 import isolate from '@cycle/isolate';
-import {div, span, input, button, ul, VNode, DOMSource} from '@cycle/dom';
+import {div, VNode, DOMSource} from '@cycle/dom';
 import {StateSource, pick, mix, Lens} from 'cycle-onionify';
 import Item, {State as ItemState, Sources as ItemSources} from './Item';
-import {State as CounterState} from './Counter';
 
 export type State = {
-  list: Array<ItemState>;
-  counter: CounterState;
+  list: Array<{content: string}>;
+  currentIndex: number;
 }
 
 export type Reducer = (prev?: State) => State | undefined;
 
-export interface Sources {
+export type Sources = {
   DOM: DOMSource;
   onion: StateSource<State>;
 }
 
-export interface Sinks {
+export type Sinks = {
   DOM: Stream<VNode>;
   onion: Stream<Reducer>;
 }
@@ -27,21 +26,13 @@ export default function List(sources: Sources): Sinks {
     return {
       get: state => ({
         content: state.list[index].content,
-        count: state.counter.count
+        selected: state.currentIndex === index,
       }),
       set: (state, childState) => {
-        if (typeof childState === 'undefined') {
-          return {
-            list: state.list.filter((val: any, i: number) => i !== index),
-            counter: state.counter
-          }
-        } else {
-          const newItem = {content: childState.content};
-          return {
-            list: state.list.map((val: any, i: number) => i === index ? newItem : val),
-            counter: {count: childState.count}
-          }
+        if (childState.selected && state.currentIndex !== index) {
+          return {...state, currentIndex: index};
         }
+        return state;
       }
     };
   };
@@ -57,7 +48,7 @@ export default function List(sources: Sources): Sinks {
   const vdom$ = childrenSinks$
     .compose(pick('DOM'))
     .compose(mix(xs.combine))
-    .map(itemVNodes => ul(itemVNodes));
+    .map(itemVNodes => div({style: {marginTop: '20px'}}, itemVNodes));
 
   const reducer$ = childrenSinks$
     .compose(pick('onion'))
